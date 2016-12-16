@@ -1,5 +1,7 @@
 package scripts;
 
+import org.powerbot.script.Condition;
+import org.powerbot.script.PaintListener;
 import org.powerbot.script.PollingScript;
 import org.powerbot.script.Script;
 import org.powerbot.script.rt4.ClientContext;
@@ -15,12 +17,12 @@ import java.awt.event.WindowEvent;
 /**
  * Created by Terminator1 on 12/16/2016.
  */
-@Script.Manifest(description = "Drops selected inventory items v0.124 Author:Terminator1", name ="Dropper")
-public class ProjectDropper extends PollingScript<ClientContext> implements ActionListener{
+@Script.Manifest(description = "Drops selected inventory items v0.125 Author:Terminator1", name ="Dropper")
+public class ProjectDropper extends PollingScript<ClientContext> implements ActionListener,PaintListener {
 
     private JFrame mainFrame;
     private Boolean exitCall = false, dropState = false;
-    private JButton invent[] = new JButton[30],check,drop;
+    private JButton invent[] = new JButton[30],check,drop,clear,invert;
     private int inventSelected[] = new int[28];
 
     private void prepareGUI(){
@@ -39,12 +41,16 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
         }
         check = new JButton("Check");
         drop = new JButton("Drop");
+        clear = new JButton("Clear");
+        invert = new JButton("Invert");
         check.addActionListener(this);
         drop.addActionListener(this);
+        clear.addActionListener(this);
+        invert.addActionListener(this);
         mainFrame.add(check);
         mainFrame.add(drop);
-        mainFrame.add(new JButton("Soon"));
-        mainFrame.add(new JButton("Soon"));
+        mainFrame.add(clear);
+        mainFrame.add(invert);
         mainFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -53,11 +59,20 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
         });
     }
 
-    public void start() {
-        prepareGUI();
-        mainFrame.setVisible(true);
+    public void clear() {
         for(int i = 0;i < 28;i ++)
             inventSelected[i] = 0;
+    }
+
+    public void invert() {
+        for(int i = 0;i < 28;i ++)
+            click(i);
+    }
+
+    public void start() {
+        prepareGUI();
+        clear();
+        mainFrame.setVisible(true);
     }
 
     public void stop() {
@@ -81,6 +96,13 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
         }
     }
 
+    private void click(int id) {
+        if(inventSelected[id] == 0)
+            inventSelected[id] = 1;
+        else
+            inventSelected[id] = 0;
+    }
+
     @Override
     public void poll() {
         check();
@@ -88,13 +110,7 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
             drop();
             dropState = false;
         }
-    }
-
-    private void click(int id) {
-        if(inventSelected[id] == 0)
-            inventSelected[id] = 1;
-        else
-            inventSelected[id] = 0;
+        Condition.sleep(375);
     }
 
     @Override
@@ -104,6 +120,10 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
         else if(e.getSource().equals(drop)) {
             log.warning("Drop was clicked.");
             dropState = true;
+        } else if(e.getSource().equals(clear)) {
+            clear();
+        } else if(e.getSource().equals(invert)) {
+            invert();
         }
         for(int i=0;i<28;i++) {
             if(e.getSource().equals(invent[i])) {
@@ -112,5 +132,4 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
             }
         }
     }
-
 }
