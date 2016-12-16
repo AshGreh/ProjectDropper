@@ -15,39 +15,34 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 /**
- * Created by Terminator1 on 12/16/2016.
+ * Created by Genoss on 12/16/2016:1:53 PM
  */
-@Script.Manifest(description = "Drops selected inventory items v0.125 Author:Terminator1", name ="Dropper")
+@Script.Manifest(description = "Drops selected inventory items v0.127 Author:Terminator1", name ="Dropper")
 public class ProjectDropper extends PollingScript<ClientContext> implements ActionListener,PaintListener {
 
     private JFrame mainFrame;
-    private Boolean exitCall = false, dropState = false;
-    private JButton invent[] = new JButton[30],check,drop,clear,invert;
+    private Boolean dropState = false,dropAbort = false;
+    private JButton invent[] = new JButton[30],abort,drop,clear,invert;
     private int inventSelected[] = new int[28];
 
     private void prepareGUI(){
         mainFrame = new JFrame("Dropper interface");
         mainFrame.setSize(500,650);
-        mainFrame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent windowEvent){
-                exitCall = true;
-            }
-        });
         mainFrame.setLayout(new GridLayout(8,4));
         for(int i = 0;i<28;i++) {
             invent[i] = new JButton(ctx.inventory.itemAt(i).name());
             invent[i].addActionListener(this);
             mainFrame.add(invent[i]);
         }
-        check = new JButton("Check");
+        abort = new JButton("Abort");
         drop = new JButton("Drop");
         clear = new JButton("Clear");
         invert = new JButton("Invert");
-        check.addActionListener(this);
+        abort.addActionListener(this);
         drop.addActionListener(this);
         clear.addActionListener(this);
         invert.addActionListener(this);
-        mainFrame.add(check);
+        mainFrame.add(abort);
         mainFrame.add(drop);
         mainFrame.add(clear);
         mainFrame.add(invert);
@@ -59,12 +54,12 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
         });
     }
 
-    public void clear() {
+    private void clear() {
         for(int i = 0;i < 28;i ++)
             inventSelected[i] = 0;
     }
 
-    public void invert() {
+    private void invert() {
         for(int i = 0;i < 28;i ++)
             click(i);
     }
@@ -89,8 +84,16 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
     private void drop() {
         int i = 0;
         for(Item item: ctx.inventory.select()) {
-            if(inventSelected[i] == 0) {
-                item.interact("Drop");
+
+            if(!dropAbort) {
+                if (inventSelected[i] == 0) {
+                    item.interact("Drop");
+                }
+            } else {
+                log.warning("Drop interrupted");
+                clear();
+                dropAbort = false;
+                break;
             }
             i++;
         }
@@ -110,13 +113,13 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
             drop();
             dropState = false;
         }
-        Condition.sleep(375);
+        Condition.sleep(325);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if(e.getSource().equals(check))
-            check();
+        if(e.getSource().equals(abort))
+            dropAbort = true;
         else if(e.getSource().equals(drop)) {
             log.warning("Drop was clicked.");
             dropState = true;
@@ -132,4 +135,9 @@ public class ProjectDropper extends PollingScript<ClientContext> implements Acti
             }
         }
     }
+
+    /*Problems:
+      ->Button overhead problem{temp solution implemented}
+      ->Drop lock problem{temp solution implemented}
+     */
 }
